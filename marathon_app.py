@@ -3,33 +3,38 @@ import pandas as pd
 
 st.set_page_config(page_title="Jakarta 2026 Plan", layout="wide")
 
-# Updated CSS to fix gaps and force header colors
+# Optimized CSS for spacing and dynamic colors
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     h1 { font-size: 1.3rem !important; margin-bottom: 5px !important; }
     
-    /* Fix weird spacing between weeks */
-    [data-testid="stVerticalBlock"] > div {
-        margin-top: -15px !important;
+    /* Container for the whole list to control spacing */
+    [data-testid="stVerticalBlock"] > div:has(div[data-testid="stExpander"]) {
+        gap: 0.5rem !important;
     }
-    
+
     /* Top Cards Styling */
     .summary-card-mini p { font-size: 0.7rem; color: #888; margin: 0; }
     .summary-card-mini h3 { font-size: 1.0rem; margin: 0; color: #ffffff; }
 
-    /* Day Card Styling */
+    /* Day Card Styling - Font size fixed */
     .day-card {
         background-color: #1e1e26;
         border-radius: 8px;
         padding: 10px;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         min-height: 90px;
         border-left: 5px solid;
     }
     .day-card b { font-size: 0.85rem; color: #eee; }
     .day-card p { font-size: 0.8rem; margin: 0; color: #bbb; line-height: 1.3; }
     
+    /* Ensure internal content has breathing room from header */
+    [data-testid="stExpanderDetails"] {
+        padding-top: 1.5rem !important;
+    }
+
     /* Run Type Colors */
     .color-easy { border-left-color: #2ECC71 !important; }
     .color-tempo { border-left-color: #F1C40F !important; }
@@ -44,7 +49,7 @@ st.title("🏃 Jakarta Marathon '26")
 
 # Dashboard Row
 st.markdown("""
-    <div style="display: flex; justify-content: space-between; gap: 8px; margin-bottom: 30px; margin-top: 10px;">
+    <div style="display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px;">
         <div style="background:#1a1c24; padding:10px; border-radius:8px; flex:1; text-align:center; border:1px solid #333;">
             <p style="font-size:0.7rem; color:#888; margin:0;">WEEK</p><h3 style="margin:0; font-size:1rem;">0</h3>
         </div>
@@ -74,25 +79,24 @@ def get_style_class(text):
 
 # Weekly View
 for idx, row in df.iterrows():
-    phase_color = row.get('PhaseColor', '#2ECC71')
+    p_color = row.get('PhaseColor', '#2ECC71')
     header_text = f"{row['Week']} | {row['Date']} | {row['Total Vol']} | {row['Phase']}"
     
-    # This specific CSS hack targets the individual expander container
+    # Using a unique key for each expander to prevent style bleeding
     st.markdown(f"""
         <style>
+        /* Targeted color application for each phase */
         div[data-testid="stExpander"]:nth-of-type({idx+1}) {{
-            background-color: {phase_color}33 !important;
-            border-radius: 8px !important;
-            margin-bottom: 8px !important;
-        }}
-        div[data-testid="stExpander"]:nth-of-type({idx+1}) summary {{
-            color: white !important;
+            border: 1px solid {p_color}44 !important;
+            border-left: 6px solid {p_color} !important;
+            background-color: {p_color}15 !important;
+            margin-bottom: 5px !important;
         }}
         </style>
     """, unsafe_allow_html=True)
     
     with st.expander(header_text):
-        # Mon-Thu
+        # Days
         days = ["Monday", "Tuesday", "Wednesday", "Thursday"]
         for i in range(0, 4, 2):
             cols = st.columns(2)
@@ -102,7 +106,7 @@ for idx, row in df.iterrows():
                 st_class = get_style_class(content)
                 cols[j].markdown(f'<div class="day-card {st_class}"><b>{day[:3]}</b><p>{content}</p></div>', unsafe_allow_html=True)
 
-        # Friday Double
+        # Friday
         f_cols = st.columns(2)
         f_content = str(row["Friday"])
         am = f_content.split("/")[0].strip() if "/" in f_content else "AM: 5km Easy"
