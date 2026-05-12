@@ -3,15 +3,15 @@ import pandas as pd
 
 st.set_page_config(page_title="Jakarta 2026 Plan", layout="wide")
 
-# Custom CSS for compact UI, smaller headings, and header badges
+# Custom CSS for compact UI and header badges
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     
-    /* Smaller Titles */
+    /* Smaller Title */
     h1 { font-size: 1.2rem !important; margin-bottom: 5px !important; margin-top: 0px !important; }
     
-    /* Compact Top Cards in one row */
+    /* Compact Top Cards */
     .summary-container {
         display: flex;
         justify-content: space-between;
@@ -29,7 +29,7 @@ st.markdown("""
     .summary-card-mini p { font-size: 0.6rem; color: #888; margin: 0; text-transform: uppercase; }
     .summary-card-mini h3 { font-size: 0.85rem; margin: 0; color: #ffffff; }
 
-    /* Day Card Styling - Optimized for Mobile */
+    /* Day Card Styling */
     .day-card {
         background-color: #1e1e26;
         border-radius: 8px;
@@ -62,10 +62,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 1. Smaller Header
 st.title("🏃 Jakarta Marathon '26")
 
-# 2. Compact Top Row
+# Dashboard (Zero-State)
 st.markdown("""
     <div class="summary-container">
         <div class="summary-card-mini"><p>Week</p><h3>0</h3></div>
@@ -76,7 +75,6 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    # Looks for the v2 file we created with the Phase columns
     return pd.read_excel("Jakarta_Marathon_High_Volume_Plan_v2.xlsx")
 
 df = load_data()
@@ -90,17 +88,16 @@ def get_style_class(text):
     if "rest" in text: return "color-rest"
     return "color-easy"
 
-# 3. Weekly View
+# Weekly View
 for idx, row in df.iterrows():
     phase = row.get('Phase', 'BUILD')
     phase_color = row.get('PhaseColor', '#2ECC71')
+    volume = row.get('Total Vol', '0 km')
     
-    header_text = f"{row['Week']} | {row['Date']}"
+    # Updated Header: Week | Date | Total Km | Phase
+    header_text = f"{row['Week']} | {row['Date']} | {volume} | {phase}"
     
     with st.expander(header_text):
-        # Badge added here is visible in the row when expanded or scanned
-        st.markdown(f'<span class="phase-badge-inline" style="background-color:{phase_color};">{phase}</span>', unsafe_allow_html=True)
-        
         # Mon-Thu Grid
         days = ["Monday", "Tuesday", "Wednesday", "Thursday"]
         for i in range(0, 4, 2):
@@ -111,8 +108,7 @@ for idx, row in df.iterrows():
                 st_class = get_style_class(content)
                 cols[j].markdown(f'<div class="day-card {st_class}"><b>{day[:3]}</b><p>{content}</p></div>', unsafe_allow_html=True)
 
-        # Friday
-        st.markdown("<p style='font-size:0.8rem; font-weight:bold; margin-bottom:5px;'>Friday Double</p>", unsafe_allow_html=True)
+        # Friday (No heading on top)
         f_cols = st.columns(2)
         f_content = str(row["Friday"])
         am = f_content.split("/")[0].strip() if "/" in f_content else "AM: 5km Easy"
