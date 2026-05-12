@@ -3,56 +3,37 @@ import pandas as pd
 
 st.set_page_config(page_title="Jakarta 2026 Plan", layout="wide")
 
-# Custom CSS for compact UI and header badges
+# Custom CSS for larger fonts and dynamic header coloring
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
     
     /* Smaller Title */
-    h1 { font-size: 1.2rem !important; margin-bottom: 5px !important; margin-top: 0px !important; }
+    h1 { font-size: 1.3rem !important; margin-bottom: 5px !important; }
     
-    /* Compact Top Cards */
-    .summary-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 20px;
-    }
-    .summary-card-mini {
-        background-color: #1a1c24;
-        padding: 10px 5px;
-        border-radius: 8px;
-        border: 1px solid #333;
-        flex: 1;
-        text-align: center;
-    }
-    .summary-card-mini p { font-size: 0.6rem; color: #888; margin: 0; text-transform: uppercase; }
-    .summary-card-mini h3 { font-size: 0.85rem; margin: 0; color: #ffffff; }
+    /* Compact Top Cards - Slightly larger text */
+    .summary-card-mini p { font-size: 0.7rem; color: #888; margin: 0; }
+    .summary-card-mini h3 { font-size: 1.0rem; margin: 0; color: #ffffff; }
 
-    /* Day Card Styling */
+    /* Day Card Styling - Increased Font Size */
     .day-card {
         background-color: #1e1e26;
         border-radius: 8px;
-        padding: 8px;
+        padding: 10px;
         margin-bottom: 8px;
-        min-height: 80px;
-        border-left: 4px solid;
+        min-height: 90px;
+        border-left: 5px solid;
     }
-    .day-card b { font-size: 0.75rem; color: #eee; }
-    .day-card p { font-size: 0.7rem; margin: 0; color: #bbb; line-height: 1.2; }
+    .day-card b { font-size: 0.85rem; color: #eee; }
+    .day-card p { font-size: 0.8rem; margin: 0; color: #bbb; line-height: 1.3; }
     
-    /* Phase Badges inside Header (Float right) */
-    .phase-badge-inline {
-        float: right;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.6rem;
-        font-weight: bold;
-        color: white;
-        margin-left: 10px;
-    }
-
-    /* Colors for Run Types */
+    /* Custom style for expander headers to use Phase Colors */
+    .stExpander { border: none !important; margin-bottom: 10px !important; }
+    
+    /* Global font bump for any remaining text */
+    div[data-testid="stMarkdownContainer"] p { font-size: 0.85rem; }
+    
+    /* Colors for Run Types (Left Border) */
     .color-easy { border-left-color: #2ECC71 !important; }
     .color-tempo { border-left-color: #F1C40F !important; }
     .color-progressive { border-left-color: #E67E22 !important; }
@@ -64,12 +45,18 @@ st.markdown("""
 
 st.title("🏃 Jakarta Marathon '26")
 
-# Dashboard (Zero-State)
+# Dashboard (One row)
 st.markdown("""
-    <div class="summary-container">
-        <div class="summary-card-mini"><p>Week</p><h3>0</h3></div>
-        <div class="summary-card-mini"><p>Today</p><h3>-</h3></div>
-        <div class="summary-card-mini"><p>Long Run</p><h3>0km</h3></div>
+    <div style="display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px;">
+        <div style="background:#1a1c24; padding:10px; border-radius:8px; flex:1; text-align:center; border:1px solid #333;">
+            <p style="font-size:0.7rem; color:#888; margin:0;">WEEK</p><h3 style="margin:0; font-size:1rem;">0</h3>
+        </div>
+        <div style="background:#1a1c24; padding:10px; border-radius:8px; flex:1; text-align:center; border:1px solid #333;">
+            <p style="font-size:0.7rem; color:#888; margin:0;">TODAY</p><h3 style="margin:0; font-size:1rem;">-</h3>
+        </div>
+        <div style="background:#1a1c24; padding:10px; border-radius:8px; flex:1; text-align:center; border:1px solid #333;">
+            <p style="font-size:0.7rem; color:#888; margin:0;">LONG RUN</p><h3 style="margin:0; font-size:1rem;">0km</h3>
+        </div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -94,8 +81,17 @@ for idx, row in df.iterrows():
     phase_color = row.get('PhaseColor', '#2ECC71')
     volume = row.get('Total Vol', '0 km')
     
-    # Updated Header: Week | Date | Total Km | Phase
     header_text = f"{row['Week']} | {row['Date']} | {volume} | {phase}"
+    
+    # Injecting CSS for this specific expander to change the header background
+    st.markdown(f"""
+        <style>
+        div[data-testid="stExpander"]:nth-of-type({idx+2}) button {{
+            background-color: {phase_color}22 !important; /* Light version of phase color */
+            border-left: 5px solid {phase_color} !important;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
     
     with st.expander(header_text):
         # Mon-Thu Grid
@@ -108,7 +104,7 @@ for idx, row in df.iterrows():
                 st_class = get_style_class(content)
                 cols[j].markdown(f'<div class="day-card {st_class}"><b>{day[:3]}</b><p>{content}</p></div>', unsafe_allow_html=True)
 
-        # Friday (No heading on top)
+        # Friday
         f_cols = st.columns(2)
         f_content = str(row["Friday"])
         am = f_content.split("/")[0].strip() if "/" in f_content else "AM: 5km Easy"
