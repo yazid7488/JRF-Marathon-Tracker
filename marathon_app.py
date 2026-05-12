@@ -1,52 +1,88 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 
-st.set_page_config(page_title="Jakarta Marathon Tracker", layout="wide")
+st.set_page_config(page_title="Jakarta 2026 Plan", layout="wide")
 
-# Custom CSS for UI and Color Coding
+# Custom CSS for compact UI, smaller headings, and header badges
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
-    .summary-card { background-color: #1a1c24; padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; }
-    .day-card { background-color: #1e1e26; border-radius: 10px; padding: 12px; margin-bottom: 10px; min-height: 110px; border-left: 5px solid; }
     
-    /* Phase Badges */
-    .phase-badge { padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+    /* Smaller Titles */
+    h1 { font-size: 1.2rem !important; margin-bottom: 5px !important; margin-top: 0px !important; }
     
-    /* Specific Run Type Colors */
-    .color-easy { border-left-color: #2ECC71 !important; }      /* Green */
-    .color-tempo { border-left-color: #F1C40F !important; }     /* Yellow */
-    .color-progressive { border-left-color: #E67E22 !important; }/* Orange */
-    .color-interval { border-left-color: #9B59B6 !important; }   /* Purple */
-    .color-long { border-left-color: #E74C3C !important; }       /* Red */
-    .color-rest { border-left-color: #95A5A6 !important; }       /* Grey */
+    /* Compact Top Cards in one row */
+    .summary-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .summary-card-mini {
+        background-color: #1a1c24;
+        padding: 10px 5px;
+        border-radius: 8px;
+        border: 1px solid #333;
+        flex: 1;
+        text-align: center;
+    }
+    .summary-card-mini p { font-size: 0.6rem; color: #888; margin: 0; text-transform: uppercase; }
+    .summary-card-mini h3 { font-size: 0.85rem; margin: 0; color: #ffffff; }
+
+    /* Day Card Styling - Optimized for Mobile */
+    .day-card {
+        background-color: #1e1e26;
+        border-radius: 8px;
+        padding: 8px;
+        margin-bottom: 8px;
+        min-height: 80px;
+        border-left: 4px solid;
+    }
+    .day-card b { font-size: 0.75rem; color: #eee; }
+    .day-card p { font-size: 0.7rem; margin: 0; color: #bbb; line-height: 1.2; }
+    
+    /* Phase Badges inside Header (Float right) */
+    .phase-badge-inline {
+        float: right;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: bold;
+        color: white;
+        margin-left: 10px;
+    }
+
+    /* Colors for Run Types */
+    .color-easy { border-left-color: #2ECC71 !important; }
+    .color-tempo { border-left-color: #F1C40F !important; }
+    .color-progressive { border-left-color: #E67E22 !important; }
+    .color-interval { border-left-color: #9B59B6 !important; }
+    .color-long { border-left-color: #E74C3C !important; }
+    .color-rest { border-left-color: #95A5A6 !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 1. Dashboard Header (Top Cards)
-st.title("🏃 Jakarta '26 Dashboard")
-col_top1, col_top2, col_top3 = st.columns(3)
+# 1. Smaller Header
+st.title("🏃 Jakarta Marathon '26")
 
-# Initialized to "Zero" or "TBD" as requested
-with col_top1:
-    st.markdown('<div class="summary-card"><p style="color:#888;margin:0;">Week No</p><h2 style="margin:0;">0</h2></div>', unsafe_allow_html=True)
-with col_top2:
-    st.markdown('<div class="summary-card"><p style="color:#888;margin:0;">Today\'s Workout</p><h2 style="margin:0;">-</h2></div>', unsafe_allow_html=True)
-with col_top3:
-    st.markdown('<div class="summary-card"><p style="color:#888;margin:0;">Target Long Run</p><h2 style="margin:0;">0 km</h2></div>', unsafe_allow_html=True)
+# 2. Compact Top Row
+st.markdown("""
+    <div class="summary-container">
+        <div class="summary-card-mini"><p>Week</p><h3>0</h3></div>
+        <div class="summary-card-mini"><p>Today</p><h3>-</h3></div>
+        <div class="summary-card-mini"><p>Long Run</p><h3>0km</h3></div>
+    </div>
+""", unsafe_allow_html=True)
 
-# 2. Data Loading
 @st.cache_data
 def load_data():
-    df = pd.read_excel("Jakarta_Marathon_High_Volume_Plan_v2.xlsx")
-    return df
+    # Looks for the v2 file we created with the Phase columns
+    return pd.read_excel("Jakarta_Marathon_High_Volume_Plan_v2.xlsx")
 
 df = load_data()
 
-# 3. Helper for Color Coding
 def get_style_class(text):
-    text = text.lower()
+    text = str(text).lower()
     if "long" in text: return "color-long"
     if "interval" in text: return "color-interval"
     if "tempo" in text: return "color-tempo"
@@ -54,18 +90,18 @@ def get_style_class(text):
     if "rest" in text: return "color-rest"
     return "color-easy"
 
-# 4. Weekly View
+# 3. Weekly View
 for idx, row in df.iterrows():
-    # Phase logic: BUILD (Green), PEAK (Red), TAPER (Blue)
-    phase_name = row['Phase']
-    phase_color = row['PhaseColor']
+    phase = row.get('Phase', 'BUILD')
+    phase_color = row.get('PhaseColor', '#2ECC71')
     
-    label = f"**{row['Week']}** | {row['Date']} | {row['Total Vol']}"
+    header_text = f"{row['Week']} | {row['Date']}"
     
-    with st.expander(label):
-        st.markdown(f'<span class="phase-badge" style="background-color:{phase_color};">{phase_name}</span>', unsafe_allow_html=True)
+    with st.expander(header_text):
+        # Badge added here is visible in the row when expanded or scanned
+        st.markdown(f'<span class="phase-badge-inline" style="background-color:{phase_color};">{phase}</span>', unsafe_allow_html=True)
         
-        # Grid layout for mobile (Monday - Thursday)
+        # Mon-Thu Grid
         days = ["Monday", "Tuesday", "Wednesday", "Thursday"]
         for i in range(0, 4, 2):
             cols = st.columns(2)
@@ -73,30 +109,19 @@ for idx, row in df.iterrows():
                 day = days[i+j]
                 content = str(row[day])
                 st_class = get_style_class(content)
-                cols[j].markdown(f'<div class="day-card {st_class}"><b>{day[:3]}</b><br>{content}</div>', unsafe_allow_html=True)
-                cols[j].checkbox("Done", key=f"c_{idx}_{day}")
+                cols[j].markdown(f'<div class="day-card {st_class}"><b>{day[:3]}</b><p>{content}</p></div>', unsafe_allow_html=True)
 
-        # Friday Special (AM/PM separation)
-        st.markdown("---")
-        st.write("Friday Double Session")
+        # Friday
+        st.markdown("<p style='font-size:0.8rem; font-weight:bold; margin-bottom:5px;'>Friday Double</p>", unsafe_allow_html=True)
         f_cols = st.columns(2)
         f_content = str(row["Friday"])
-        am_part = f_content.split("/")[0] if "/" in f_content else "AM: 5km Easy"
-        pm_part = f_content.split("/")[1] if "/" in f_content else "PM: Intervals"
-        
-        with f_cols[0]:
-            st.markdown(f'<div class="day-card color-easy"><b>FRI AM</b><br>{am_part}</div>', unsafe_allow_html=True)
-            st.checkbox("AM Done", key=f"c_{idx}_fam")
-        with f_cols[1]:
-            st.markdown(f'<div class="day-card color-interval"><b>FRI PM</b><br>{pm_part}</div>', unsafe_allow_html=True)
-            st.checkbox("PM Done", key=f"c_{idx}_fpm")
-            
+        am = f_content.split("/")[0].strip() if "/" in f_content else "AM: 5km Easy"
+        pm = f_content.split("/")[1].strip() if "/" in f_content else "PM: Intervals"
+        f_cols[0].markdown(f'<div class="day-card color-easy"><b>FRI AM</b><p>{am}</p></div>', unsafe_allow_html=True)
+        f_cols[1].markdown(f'<div class="day-card color-interval"><b>FRI PM</b><p>{pm}</p></div>', unsafe_allow_html=True)
+
         # Weekend
-        st.markdown("---")
         w_cols = st.columns(2)
-        with w_cols[0]:
-            st.markdown(f'<div class="day-card color-rest"><b>SAT</b><br>{row["Saturday"]}</div>', unsafe_allow_html=True)
-        with w_cols[1]:
-            st_class_sun = get_style_class(str(row["Sunday"]))
-            st.markdown(f'<div class="day-card {st_class_sun}"><b>SUN</b><br>{row["Sunday"]}</div>', unsafe_allow_html=True)
-            st.checkbox("LR Done", key=f"c_{idx}_sun")
+        w_cols[0].markdown(f'<div class="day-card color-rest"><b>SAT</b><p>{row["Saturday"]}</p></div>', unsafe_allow_html=True)
+        sun_class = get_style_class(row["Sunday"])
+        w_cols[1].markdown(f'<div class="day-card {sun_class}"><b>SUN</b><p>{row["Sunday"]}</p></div>', unsafe_allow_html=True)
