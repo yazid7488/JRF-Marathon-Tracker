@@ -3,19 +3,22 @@ import pandas as pd
 
 st.set_page_config(page_title="Jakarta 2026 Plan", layout="wide")
 
-# Custom CSS for larger fonts and dynamic header coloring
+# Updated CSS to fix gaps and force header colors
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
-    
-    /* Smaller Title */
     h1 { font-size: 1.3rem !important; margin-bottom: 5px !important; }
     
-    /* Compact Top Cards - Slightly larger text */
+    /* Fix weird spacing between weeks */
+    [data-testid="stVerticalBlock"] > div {
+        margin-top: -15px !important;
+    }
+    
+    /* Top Cards Styling */
     .summary-card-mini p { font-size: 0.7rem; color: #888; margin: 0; }
     .summary-card-mini h3 { font-size: 1.0rem; margin: 0; color: #ffffff; }
 
-    /* Day Card Styling - Increased Font Size */
+    /* Day Card Styling */
     .day-card {
         background-color: #1e1e26;
         border-radius: 8px;
@@ -27,13 +30,7 @@ st.markdown("""
     .day-card b { font-size: 0.85rem; color: #eee; }
     .day-card p { font-size: 0.8rem; margin: 0; color: #bbb; line-height: 1.3; }
     
-    /* Custom style for expander headers to use Phase Colors */
-    .stExpander { border: none !important; margin-bottom: 10px !important; }
-    
-    /* Global font bump for any remaining text */
-    div[data-testid="stMarkdownContainer"] p { font-size: 0.85rem; }
-    
-    /* Colors for Run Types (Left Border) */
+    /* Run Type Colors */
     .color-easy { border-left-color: #2ECC71 !important; }
     .color-tempo { border-left-color: #F1C40F !important; }
     .color-progressive { border-left-color: #E67E22 !important; }
@@ -45,9 +42,9 @@ st.markdown("""
 
 st.title("🏃 Jakarta Marathon '26")
 
-# Dashboard (One row)
+# Dashboard Row
 st.markdown("""
-    <div style="display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; gap: 8px; margin-bottom: 30px; margin-top: 10px;">
         <div style="background:#1a1c24; padding:10px; border-radius:8px; flex:1; text-align:center; border:1px solid #333;">
             <p style="font-size:0.7rem; color:#888; margin:0;">WEEK</p><h3 style="margin:0; font-size:1rem;">0</h3>
         </div>
@@ -77,24 +74,25 @@ def get_style_class(text):
 
 # Weekly View
 for idx, row in df.iterrows():
-    phase = row.get('Phase', 'BUILD')
     phase_color = row.get('PhaseColor', '#2ECC71')
-    volume = row.get('Total Vol', '0 km')
+    header_text = f"{row['Week']} | {row['Date']} | {row['Total Vol']} | {row['Phase']}"
     
-    header_text = f"{row['Week']} | {row['Date']} | {volume} | {phase}"
-    
-    # Injecting CSS for this specific expander to change the header background
+    # This specific CSS hack targets the individual expander container
     st.markdown(f"""
         <style>
-        div[data-testid="stExpander"]:nth-of-type({idx+2}) button {{
-            background-color: {phase_color}22 !important; /* Light version of phase color */
-            border-left: 5px solid {phase_color} !important;
+        div[data-testid="stExpander"]:nth-of-type({idx+1}) {{
+            background-color: {phase_color}33 !important;
+            border-radius: 8px !important;
+            margin-bottom: 8px !important;
+        }}
+        div[data-testid="stExpander"]:nth-of-type({idx+1}) summary {{
+            color: white !important;
         }}
         </style>
     """, unsafe_allow_html=True)
     
     with st.expander(header_text):
-        # Mon-Thu Grid
+        # Mon-Thu
         days = ["Monday", "Tuesday", "Wednesday", "Thursday"]
         for i in range(0, 4, 2):
             cols = st.columns(2)
@@ -104,7 +102,7 @@ for idx, row in df.iterrows():
                 st_class = get_style_class(content)
                 cols[j].markdown(f'<div class="day-card {st_class}"><b>{day[:3]}</b><p>{content}</p></div>', unsafe_allow_html=True)
 
-        # Friday
+        # Friday Double
         f_cols = st.columns(2)
         f_content = str(row["Friday"])
         am = f_content.split("/")[0].strip() if "/" in f_content else "AM: 5km Easy"
